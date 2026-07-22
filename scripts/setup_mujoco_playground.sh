@@ -5,7 +5,9 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EXTERNAL_DIR="$PROJECT_ROOT/external"
 PLAYGROUND_DIR="$EXTERNAL_DIR/mujoco_playground"
 
-echo "== Project Jiraiya MuJoCo Playground Setup =="
+PLAYGROUND_COMMIT="87a4bf98f1806adefd240d72dd53a2c3ceeb2f0d"
+
+echo "== Robot Learning MuJoCo Playground Setup =="
 echo "Project root: $PROJECT_ROOT"
 echo
 
@@ -26,9 +28,12 @@ if [ ! -d "$PLAYGROUND_DIR/.git" ]; then
   echo "Cloning MuJoCo Playground source."
   git clone https://github.com/google-deepmind/mujoco_playground.git "$PLAYGROUND_DIR"
 else
-  echo "MuJoCo Playground source already exists. Pulling latest changes."
-  git -C "$PLAYGROUND_DIR" pull --ff-only
+  echo "MuJoCo Playground source already exists. Fetching the pinned revision."
+  git -C "$PLAYGROUND_DIR" fetch origin "$PLAYGROUND_COMMIT"
 fi
+
+echo "Checking out pinned MuJoCo Playground commit: $PLAYGROUND_COMMIT"
+git -C "$PLAYGROUND_DIR" checkout --detach "$PLAYGROUND_COMMIT"
 
 cd "$PLAYGROUND_DIR"
 
@@ -67,7 +72,7 @@ echo
 echo "Verifying MuJoCo Playground import."
 uv --no-config run python -c "import mujoco_playground; print('MuJoCo Playground import: success')"
 
-if [ "${JIRAIYA_CLEAN_UV_CACHE:-1}" = "1" ]; then
+if [ "${ROBOT_LEARNING_CLEAN_UV_CACHE:-1}" = "1" ]; then
   echo
   echo "Cleaning uv download cache to save disk space."
   uv cache clean || true
