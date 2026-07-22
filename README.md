@@ -19,12 +19,14 @@ The emphasis is experimental discipline: reproduce a strong baseline, isolate on
 
 The G1 result reproduces the official `G1JoystickFlatTerrain` task. The Panda result comes from a staged curriculum that progressed from lifting to holding, transport, release, and stable placement.
 
-## Policy Rollouts
+## Behavior Progression
 
-- [Unitree G1 official baseline locomotion](media/g1-official-baseline.mp4) - the reproduced PPO policy walks beyond the fixed camera frame.
-- [Franka Panda transport curriculum v3](media/panda-transport-v3.mp4) - the strongest saved manipulation rollout demonstrates grasping, lifting, sustained holding, and object transport.
+| Study | Improved rollout | Earlier diagnostic |
+|---|---|---|
+| Unitree G1 locomotion | [Official baseline walks beyond the camera frame](media/g1-official-baseline.mp4) | [Early policy falls forward immediately](media/g1-early-forward-fall.mp4) |
+| Franka Panda manipulation | [Transport v3 grasps, lifts, holds, and moves the cube](media/panda-transport-v3.mp4) | [Initial policy drags the cube without lifting](media/panda-baseline-dragging.mp4) |
 
-The Panda video shows the v3 precursor to the final release-and-settle policy. The v4 result is supported by a 60-episode, three-seed instrumented evaluation rather than a selected rollout; v4 training and evaluation disabled routine rendering to conserve cloud credits.
+These videos illustrate behavioral progression; the quantified claims above come from instrumented evaluations, not selected rollouts. The Panda v3 video is the strongest saved precursor to the final release-and-settle policy. The v4 result is supported by a 60-episode, three-seed evaluation because routine v4 rendering was disabled to conserve cloud credits.
 
 ## Learning System
 
