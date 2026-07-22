@@ -1,0 +1,26 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Local configuration and credentials
+.env
+.env.*
+*.pem
+*.key
+.aws/
+.ssh/
+
+# Training artifacts
+runs/
+checkpoints/
+*.ckpt
+*.mp4
+*.gif
+*.npz
+*.pkl
+tensorboard/
+
+# MuJoCo Playground source checkout
+external/
