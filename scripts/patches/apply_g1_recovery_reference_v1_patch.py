@@ -14,13 +14,13 @@ import argparse
 from pathlib import Path
 
 
-PATCH_MARKER = "# Project Jiraiya G1 recovery_reference_v1"
+PATCH_MARKER = "# Robot Learning Experiments G1 recovery_reference_v1"
 RESET_START = "  def reset(self, rng: jax.Array) -> mjx_env.State:"
 STEP_START = "  def step(self, state: mjx_env.State, action: jax.Array) -> mjx_env.State:"
 OBS_START = "  def _get_obs("
 
 PATCHED_RESET_AND_STEP = '''  def _stand_qpos(self) -> jax.Array:
-    """Project Jiraiya G1 recovery_reference_v1 neutral standing reset pose."""
+    """G1 recovery_reference_v1 neutral standing reset pose."""
     qpos = jp.array(self._init_q)
     for joint_name in ("left_hip_pitch_joint", "right_hip_pitch_joint"):
       qpos = qpos.at[self.mj_model.joint(joint_name).qposadr].add(-0.05)
@@ -133,7 +133,7 @@ PATCHED_RESET_AND_STEP = '''  def _stand_qpos(self) -> jax.Array:
     return metrics
 
   def reset(self, rng: jax.Array) -> mjx_env.State:
-    # Project Jiraiya G1 recovery_reference_v1: deterministic recovery reset.
+    # G1 recovery_reference_v1: deterministic recovery reset.
     qpos = self._stand_qpos()
     qvel = jp.zeros(self.mjx_model.nv)
     motor_targets = self._neutral_pose()
@@ -304,8 +304,8 @@ def find_g1_file(playground_dir: Path) -> Path:
 
 
 def source_text_for_patch(g1_path: Path) -> str:
-    recovery_backup = g1_path.with_suffix(".py.jiraiya_g1_recovery_reference_v1_backup")
-    v5_backup = g1_path.with_suffix(".py.jiraiya_g1_reference_gait_v5_backup")
+    recovery_backup = g1_path.with_suffix(".py.robot_learning_g1_recovery_reference_v1_backup")
+    v5_backup = g1_path.with_suffix(".py.robot_learning_g1_reference_gait_v5_backup")
     if recovery_backup.exists():
         return recovery_backup.read_text(encoding="utf-8")
     if v5_backup.exists():
@@ -315,7 +315,7 @@ def source_text_for_patch(g1_path: Path) -> str:
 
 def apply_patch(g1_path: Path) -> None:
     current_text = g1_path.read_text(encoding="utf-8")
-    backup_path = g1_path.with_suffix(".py.jiraiya_g1_recovery_reference_v1_backup")
+    backup_path = g1_path.with_suffix(".py.robot_learning_g1_recovery_reference_v1_backup")
 
     if PATCH_MARKER in current_text:
         print(f"G1 recovery_reference_v1 patch already present: {g1_path}")
@@ -338,7 +338,7 @@ def apply_patch(g1_path: Path) -> None:
 
 
 def restore_patch(g1_path: Path) -> None:
-    backup_path = g1_path.with_suffix(".py.jiraiya_g1_recovery_reference_v1_backup")
+    backup_path = g1_path.with_suffix(".py.robot_learning_g1_recovery_reference_v1_backup")
     if not backup_path.exists():
         raise FileNotFoundError(f"No recovery_reference_v1 backup found for {g1_path}")
     g1_path.write_text(backup_path.read_text(encoding="utf-8"), encoding="utf-8")
