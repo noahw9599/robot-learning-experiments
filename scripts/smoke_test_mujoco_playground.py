@@ -1,4 +1,4 @@
-"""Smoke test for the Project Jiraiya MuJoCo Playground environment."""
+"""Smoke test for the robot-learning MuJoCo Playground environment."""
 
 from __future__ import annotations
 
