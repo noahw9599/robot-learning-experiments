@@ -7,8 +7,8 @@ import argparse
 from pathlib import Path
 
 
-MARKER = "# Project Jiraiya Panda transport_reward_v4"
-BACKUP_SUFFIX = ".jiraiya_panda_transport_reward_v4_backup"
+MARKER = "# Robot Learning Experiments Panda transport_reward_v4"
+BACKUP_SUFFIX = ".robot_learning_panda_transport_reward_v4_backup"
 
 
 def replace_once(text: str, old: str, new: str, label: str) -> str:
@@ -23,8 +23,8 @@ def apply(path: Path) -> None:
     if MARKER in text:
         print("Panda transport-reward v4 patch is already active.")
         return
-    if "Project Jiraiya Panda transport_reward_v3" not in text:
-        raise RuntimeError("v4 requires the active Project Jiraiya v3 patch.")
+    if "Robot Learning Experiments Panda transport_reward_v3" not in text:
+        raise RuntimeError("v4 requires the active Panda transport_reward_v3 patch.")
 
     backup = path.with_name(path.name + BACKUP_SUFFIX)
     if backup.exists():
