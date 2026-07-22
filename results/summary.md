@@ -1,12 +1,36 @@
-# Project Jiraiya Results Summary
+# Verified Results Summary
 
-| Track | Key result |
-|---|---|
-| G1 official locomotion | 202M transitions; reward -5.801 to 15.578 |
-| G1 push robustness | 5/5 seeds survived 250 steps |
-| Panda manipulation | 85.0% stable placement across 60 episodes and 3 seeds |
-| Observation augmentation | Bounded before training due to compilation cost |
+Only results backed by saved checkpoints or instrumented evaluations are included here.
 
-## Resume-Safe Summary
+## Unitree G1 Locomotion
 
-Reproduced a Unitree G1 locomotion baseline in MuJoCo Playground using JAX/MJX and Brax PPO, evaluated it under randomized pushes, and built a staged Panda manipulation curriculum that achieved 85% stable placement across three seeds. Documented reward exploitation, checkpoint compatibility, evaluation design, and cloud-compute controls.
+| Metric | Result |
+|---|---:|
+| Training transitions | 202,342,400 |
+| Initial evaluation reward | -5.801 |
+| Final evaluation reward | 15.578 |
+| Peak evaluation reward | 16.157 |
+| Push-evaluation seeds | 5 |
+| Total push-evaluation steps | 1,250 |
+| Full-horizon survival | 5/5 seeds |
+| Early terminations | 0 |
+
+## Franka Panda Manipulation
+
+| Metric | Mean across 3 seeds |
+|---|---:|
+| Evaluation episodes | 60 total |
+| Lift success | 100% |
+| Hold success | 100% |
+| Target-region approach | 96.7% +/- 5.8 percentage points |
+| Release success | 86.7% +/- 2.9 percentage points |
+| Stable placement | 85.0% +/- 5.0 percentage points |
+| Closest target distance | 3.72 +/- 0.45 cm |
+
+## Resume-Safe Description
+
+Reproduced a Unitree G1 locomotion baseline in MuJoCo Playground using JAX/MJX and Brax PPO, evaluated the policy under randomized planar pushes, and developed a staged Panda manipulation curriculum that achieved 85% stable placement over 60 episodes across three seeds.
+
+## Scope
+
+These figures describe the recorded simulation protocols in this repository. They do not imply real-world transfer or performance outside the tested command, disturbance, object, and target distributions.
