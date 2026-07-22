@@ -1,67 +1,96 @@
 # Robot Learning Experiments
 
-A reproducible robot-learning project focused on understanding reinforcement learning, imitation learning, simulation, and evaluation for humanoid robotics.
+Reinforcement-learning experiments for humanoid locomotion and robotic manipulation in MuJoCo Playground.
 
-This repository documents **Project Jiraiya**, a MuJoCo Playground study built around two controlled tracks:
+This repository presents two controlled studies built with MuJoCo/MJX, JAX, and Brax PPO:
 
-- Unitree G1 humanoid locomotion with JAX/MJX and Brax PPO
-- Franka Panda manipulation with staged reward design
+- Unitree G1 locomotion baseline reproduction and disturbance evaluation
+- Franka Panda pick-and-place reward curriculum and multi-seed evaluation
 
-The goal is not to claim a novel algorithm. The goal is to reproduce strong baselines, understand why they work, measure failure modes, and make controlled changes.
+The emphasis is experimental discipline: reproduce a strong baseline, isolate one change at a time, measure behavior across seeds, document failure modes, and keep claims proportional to the evidence.
 
-## Verified Results
+## Results at a Glance
 
-### Unitree G1 locomotion
+| Study | Training | Evaluation result |
+|---|---:|---|
+| Unitree G1 locomotion | 202,342,400 transitions | Reward improved from -5.801 to 15.578; peak 16.157 |
+| G1 disturbance robustness | Existing baseline checkpoint | 5/5 seeds completed the 250-step push horizon; 0 early terminations |
+| Panda release-and-settle curriculum | 1,638,400 final-stage transitions | 85.0% stable placement across 60 episodes and 3 seeds |
 
-- Environment: `G1JoystickFlatTerrain`
-- MuJoCo Playground commit: `87a4bf98f1806adefd240d72dd53a2c3ceeb2f0d`
-- Training: `202,342,400` transitions
-- Reward: `-5.801 -> 15.578`
-- Peak reward: `16.157`
-- Five-seed push evaluation: `5/5` full-horizon survival
-- Push evaluation: `1,250` total simulation steps, `0` early terminations
+The G1 result reproduces the official `G1JoystickFlatTerrain` task. The Panda result comes from a staged curriculum that progressed from lifting to holding, transport, release, and stable placement.
 
-### Franka Panda manipulation
+## Learning System
 
-A staged curriculum changed the task objective from lift, to transport, to release and settle.
+```mermaid
+flowchart LR
+    A["MuJoCo / MJX environment"] --> B["Actor observations"]
+    B --> C["Brax PPO policy"]
+    C --> D["Joint position targets"]
+    D --> A
+    A --> E["Reward and termination"]
+    E --> F["Parallel PPO updates"]
+    F --> C
+    A --> G["Privileged simulator state"]
+    G --> H["Value function"]
+    H --> F
+```
 
-- Final v4 training: `1,638,400` actual transitions
-- Robustness evaluation: `60` episodes across `3` seeds
-- Lift: `100%`
-- Hold: `100%`
-- Target-region approach: `96.7% +/- 5.8 percentage points`
-- Stable placement: `85.0% +/- 5.0 percentage points`
+The G1 policy uses an asymmetric actor-critic design: the actor receives a 103-element deployable state vector, while the critic receives additional privileged simulation information during training.
 
-## What I Learned
+## Key Engineering Work
 
-- PPO optimizes expected long-term return; it does not undo a bad action like a search algorithm.
-- A higher scalar reward does not necessarily mean better locomotion or disturbance recovery.
-- Reward shaping can create exploitable behaviors such as dragging, scooting, or over-conservative motion.
-- Asymmetric actor-critic training gives the critic privileged simulator state while keeping the actor closer to deployable observations.
-- Checkpoints are architecture-dependent: changing observation size requires training from scratch.
-- Robust evaluation requires multiple seeds and behavior-level metrics, not only TensorBoard reward curves.
-- Cloud compute must be treated as an experimental budget with bounded tests and automatic shutdown safeguards.
+- Reproduced the official G1 baseline from pinned MuJoCo Playground source.
+- Built deterministic, per-step diagnostics for support geometry, torso orientation, velocity, contacts, action authority, and actuator force.
+- Evaluated G1 robustness with randomized planar pushes across independent seeds.
+- Designed reversible reward patches for Panda lifting, transport, release, and settling.
+- Built an instrumented evaluator for lift, hold, target approach, release, final placement, and closest target distance.
+- Used TensorBoard, checkpoint manifests, headless EGL rendering, and bounded cloud runs with shutdown safeguards.
 
-## Reproducibility
+## What the Experiments Showed
 
-The project uses MuJoCo Playground, JAX/MJX, Brax PPO, TensorBoard, and AWS EC2 GPU compute. Setup and learning notes are in `docs/`; reusable setup and training helpers are in `scripts/`.
+- PPO optimizes expected return; it does not preserve or revert to one previously successful action sequence.
+- Higher scalar reward did not consistently imply better balance or disturbance recovery.
+- Poorly specified rewards produced recognizable shortcuts, including dragging and scooting.
+- Behavior-level metrics and multi-seed evaluation were more informative than reward curves alone.
+- Changing the actor observation size invalidated checkpoint normalization statistics and required training from scratch.
+- Compilation time and cloud cost are part of the practical experiment budget.
 
-The original cloud run used headless EGL rendering when visual artifacts were required. Large checkpoints, raw run directories, credentials, and cloud-specific private identifiers are intentionally excluded from this public repository.
+## Repository Structure
 
-## Research Limitations
+```text
+docs/experiments/    Experiment protocols, results, and limitations
+results/             Concise, resume-safe metrics
+scripts/diagnostics/ Per-step G1 and Panda evaluators
+scripts/patches/     Reversible reward and recovery modifications
+scripts/             Environment setup and smoke tests
+```
 
-The G1 push result is valid for the stated five-second, five-seed disturbance protocol; it is not a universal stability guarantee.
+## Reproducing the Environment
 
-A six-feature G1 observation augmentation was implemented as a controlled hypothesis, but first-pass XLA/CUDA compilation exceeded the cost-controlled smoke-test budget before a valid training update. No performance claim is made for that experiment.
+The setup script checks out the exact MuJoCo Playground commit used for the official baseline:
 
-## Repository Map
+```bash
+bash scripts/setup_mujoco_playground.sh
+python scripts/smoke_test_mujoco_playground.py
+```
 
-- `docs/`: environment notes, setup walkthroughs, experiment reports, and cloud reproducibility notes
-- `scripts/`: setup, diagnostics, and bounded training helpers
-- `results/`: concise tables and links to reproducible metrics
-- `LICENSE`: project licensing
+Large checkpoints, raw run directories, credentials, and cloud-specific identifiers are intentionally excluded. The scripts assume Linux, Python 3.12, `uv`, and accelerator-compatible JAX for full training.
+
+## Experiment Reports
+
+- [G1 official baseline](docs/experiments/g1-official-baseline.md)
+- [G1 push robustness](docs/experiments/g1-push-robustness.md)
+- [Panda manipulation curriculum](docs/experiments/panda-manipulation-curriculum.md)
+- [G1 observation augmentation attempt](docs/experiments/g1-observation-augmentation.md)
+- [Verified results summary](results/summary.md)
+
+## Limitations
+
+The G1 push result applies only to the stated five-seed, 250-step protocol. It is not a universal stability guarantee.
+
+The six-feature G1 observation experiment did not reach a valid training update before its compilation budget expired. It is documented as a bounded negative result, not as evidence that the proposed features help or hurt policy learning.
 
 ## Author
 
 Noah Wilson  
-Conquest Robotics
+Mechanical Engineering, University of Florida
