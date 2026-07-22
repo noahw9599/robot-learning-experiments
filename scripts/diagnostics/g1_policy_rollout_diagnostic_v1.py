@@ -5,7 +5,7 @@ This script runs a restored PPO policy in the patched G1 standing environment an
 records the signals we care about for failure analysis: COM relative to support,
 torso pitch/roll, pelvis velocity, foot motion, contact, action size, and reward.
 
-It is meant to run on the AWS MuJoCo Playground machine from the project root,
+It is meant to run on a configured MuJoCo Playground machine from the project root,
 while the matching stand_balance patch for the checkpoint is active.
 """
 
