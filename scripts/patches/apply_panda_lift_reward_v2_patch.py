@@ -7,8 +7,8 @@ import argparse
 from pathlib import Path
 
 
-MARKER = "# Project Jiraiya Panda lift_reward_v2"
-BACKUP_SUFFIX = ".jiraiya_panda_lift_reward_v2_backup"
+MARKER = "# Robot Learning Experiments Panda lift_reward_v2"
+BACKUP_SUFFIX = ".robot_learning_panda_lift_reward_v2_backup"
 
 
 def source_path(playground_dir: Path) -> Path:
@@ -58,7 +58,7 @@ def apply(path: Path) -> None:
         text,
         "robot_target_qpos=0.3,\n",
         "robot_target_qpos=0.3,\n"
-        "              # Project Jiraiya Panda lift_reward_v2: prioritize vertical lift over dragging.\n"
+        "              # Panda lift_reward_v2: prioritize vertical lift over dragging.\n"
         "              box_hand_contact=1.0,\n"
         "              gripper_closed=0.5,\n"
         "              lift_progress=12.0,\n"
@@ -96,7 +96,7 @@ def apply(path: Path) -> None:
 
     step_anchor = "    raw_rewards = self._get_reward(data, state.info)\n"
     step_new = (
-        "    # Project Jiraiya Panda lift_reward_v2: track lift and pre-lift dragging.\n"
+        "    # Panda lift_reward_v2: track lift and pre-lift dragging.\n"
         "    box_pos = data.xpos[self._obj_body]\n"
         "    box_height_delta = jp.maximum(box_pos[2] - self._init_obj_pos[2], 0.0)\n"
         "    horizontal_drag = jp.linalg.norm(box_pos[:2] - self._init_obj_pos[:2])\n"
@@ -131,7 +131,7 @@ def apply(path: Path) -> None:
 
     reward_anchor = '        "gripper_box": gripper_box,\n'
     reward_new = reward_anchor + (
-        '        # Project Jiraiya Panda lift_reward_v2: geometric grasp proxy and anti-drag term.\n'
+        '        # Panda lift_reward_v2: geometric grasp proxy and anti-drag term.\n'
         '        "box_hand_contact": (jp.linalg.norm(box_pos - gripper_pos) < 0.025).astype(float),\n'
         '        "gripper_closed": jp.clip(\n'
         '            1.0 - jp.mean(data.qpos[-2:]) / 0.04,\n'
