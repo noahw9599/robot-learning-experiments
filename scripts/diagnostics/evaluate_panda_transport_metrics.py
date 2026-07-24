@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate Panda transport behavior with explicit per-episode metrics."""
+"""Evaluate Panda transport with distinct transient and final-state metrics."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from mujoco_playground.config import manipulation_params
 ENV_NAME = "PandaPickCube"
 LIFT_THRESHOLD = 0.05
 HOLD_STEPS = 10
-PLACEMENT_DISTANCE = 0.08
+TARGET_DISTANCE = 0.08
 
 
 def evaluate(
@@ -77,10 +77,10 @@ def evaluate(
         hold_run = jp.zeros((batch_size,), dtype=jp.int32)
         max_hold = jp.zeros((batch_size,), dtype=jp.int32)
         min_target_distance = jp.full((batch_size,), jp.inf)
-        placement_seen = jp.zeros((batch_size,), dtype=bool)
-        stable_release_run = jp.zeros((batch_size,), dtype=jp.int32)
-        max_stable_release_run = jp.zeros((batch_size,), dtype=jp.int32)
-        release_seen = jp.zeros((batch_size,), dtype=bool)
+        target_region_seen = jp.zeros((batch_size,), dtype=bool)
+        near_target_open_run = jp.zeros((batch_size,), dtype=jp.int32)
+        max_near_target_open_run = jp.zeros((batch_size,), dtype=jp.int32)
+        post_lift_gripper_open_seen = jp.zeros((batch_size,), dtype=bool)
 
         def step(carry, _step_index):
             (
@@ -90,10 +90,10 @@ def evaluate(
                 hold_run,
                 max_hold,
                 min_target_distance,
-                placement_seen,
-                stable_release_run,
-                max_stable_release_run,
-                release_seen,
+                target_region_seen,
+                near_target_open_run,
+                max_near_target_open_run,
+                post_lift_gripper_open_seen,
             ) = carry
             rng, action_rng = jax.random.split(rng)
             action_keys = jax.random.split(action_rng, batch_size)
@@ -109,21 +109,21 @@ def evaluate(
             )
             gripper_open = jp.mean(state.data.qpos[:, -2:], axis=-1) / 0.04 >= 0.8
             min_target_distance = jp.minimum(min_target_distance, target_distance)
-            placement_seen = placement_seen | (
+            target_region_seen = target_region_seen | (
                 lifted
                 & (hold_run >= HOLD_STEPS)
-                & (target_distance <= PLACEMENT_DISTANCE)
+                & (target_distance <= TARGET_DISTANCE)
             )
-            release_seen = release_seen | (
+            post_lift_gripper_open_seen = post_lift_gripper_open_seen | (
                 lifted & (hold_run >= HOLD_STEPS) & gripper_open
             )
-            stable_release_run = jp.where(
-                gripper_open & (target_distance <= PLACEMENT_DISTANCE),
-                stable_release_run + 1,
+            near_target_open_run = jp.where(
+                gripper_open & (target_distance <= TARGET_DISTANCE),
+                near_target_open_run + 1,
                 0,
             )
-            max_stable_release_run = jp.maximum(
-                max_stable_release_run, stable_release_run
+            max_near_target_open_run = jp.maximum(
+                max_near_target_open_run, near_target_open_run
             )
             return (
                 state,
@@ -132,10 +132,10 @@ def evaluate(
                 hold_run,
                 max_hold,
                 min_target_distance,
-                placement_seen,
-                stable_release_run,
-                max_stable_release_run,
-                release_seen,
+                target_region_seen,
+                near_target_open_run,
+                max_near_target_open_run,
+                post_lift_gripper_open_seen,
             ), None
 
         carry = (
@@ -145,10 +145,10 @@ def evaluate(
             hold_run,
             max_hold,
             min_target_distance,
-            placement_seen,
-            stable_release_run,
-            max_stable_release_run,
-            release_seen,
+            target_region_seen,
+            near_target_open_run,
+            max_near_target_open_run,
+            post_lift_gripper_open_seen,
         )
         carry, _ = jax.lax.scan(step, carry, jp.arange(ppo_params.episode_length))
         (
@@ -158,17 +158,17 @@ def evaluate(
             _hold_run,
             max_hold,
             min_target_distance,
-            placement_seen,
-            _stable_release_run,
-            max_stable_release_run,
-            release_seen,
+            target_region_seen,
+            _near_target_open_run,
+            max_near_target_open_run,
+            post_lift_gripper_open_seen,
         ) = carry
         final_position = state.data.xpos[:, obj_body, :]
         final_distance = jp.linalg.norm(state.info["target_pos"] - final_position, axis=-1)
         lift_success = max_height_delta >= LIFT_THRESHOLD
         hold_success = max_hold >= HOLD_STEPS
-        placement_success = lift_success & hold_success & (final_distance <= PLACEMENT_DISTANCE)
-        stable_placement_success = max_stable_release_run >= HOLD_STEPS
+        final_target_success = (\n            lift_success\n            & hold_success\n            & post_lift_gripper_open_seen\n            & (final_distance <= TARGET_DISTANCE)\n        )
+        transient_near_target_open_success = max_near_target_open_run >= HOLD_STEPS
         return {
             "max_height_delta": max_height_delta,
             "max_hold_steps": max_hold,
@@ -178,11 +178,11 @@ def evaluate(
             "final_target_distance": final_distance,
             "lift_success": lift_success,
             "hold_success": hold_success,
-            "placement_success": placement_success,
-            "placement_seen": placement_seen,
-            "release_seen": release_seen,
-            "max_stable_release_steps": max_stable_release_run,
-            "stable_placement_success": stable_placement_success,
+            "final_target_success": final_target_success,
+            "target_region_seen": target_region_seen,
+            "post_lift_gripper_open_seen": post_lift_gripper_open_seen,
+            "max_near_target_open_steps": max_near_target_open_run,
+            "transient_near_target_open_success": transient_near_target_open_success,
         }
 
     batches_out = []
@@ -199,18 +199,18 @@ def evaluate(
         "thresholds": {
             "lift_height_delta_m": LIFT_THRESHOLD,
             "hold_steps": HOLD_STEPS,
-            "placement_distance_m": PLACEMENT_DISTANCE,
+            "target_distance_m": TARGET_DISTANCE,
         },
         "lift_success_rate": sum(flat["lift_success"]) / len(flat["lift_success"]),
         "hold_success_rate": sum(flat["hold_success"]) / len(flat["hold_success"]),
-        "placement_success_rate": sum(flat["placement_success"]) / len(flat["placement_success"]),
+        "final_target_success_rate": sum(flat["final_target_success"]) / len(flat["final_target_success"]),
         "mean_max_height_delta_m": sum(flat["max_height_delta"]) / len(flat["max_height_delta"]),
         "mean_max_hold_steps": sum(flat["max_hold_steps"]) / len(flat["max_hold_steps"]),
         "mean_final_target_distance_m": sum(flat["final_target_distance"]) / len(flat["final_target_distance"]),
-        "placement_seen_rate": sum(flat["placement_seen"]) / len(flat["placement_seen"]),
-        "release_seen_rate": sum(flat["release_seen"]) / len(flat["release_seen"]),
-        "stable_placement_success_rate": sum(flat["stable_placement_success"]) / len(flat["stable_placement_success"]),
-        "mean_max_stable_release_steps": sum(flat["max_stable_release_steps"]) / len(flat["max_stable_release_steps"]),
+        "target_region_seen_rate": sum(flat["target_region_seen"]) / len(flat["target_region_seen"]),
+        "post_lift_gripper_open_seen_rate": sum(flat["post_lift_gripper_open_seen"]) / len(flat["post_lift_gripper_open_seen"]),
+        "transient_near_target_open_rate": sum(flat["transient_near_target_open_success"]) / len(flat["transient_near_target_open_success"]),
+        "mean_max_near_target_open_steps": sum(flat["max_near_target_open_steps"]) / len(flat["max_near_target_open_steps"]),
         "mean_min_target_distance_m": sum(flat["min_target_distance"]) / len(flat["min_target_distance"]),
         "episodes_detail": flat,
     }
