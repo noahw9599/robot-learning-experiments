@@ -167,7 +167,12 @@ def evaluate(
         final_distance = jp.linalg.norm(state.info["target_pos"] - final_position, axis=-1)
         lift_success = max_height_delta >= LIFT_THRESHOLD
         hold_success = max_hold >= HOLD_STEPS
-        final_target_success = (\n            lift_success\n            & hold_success\n            & post_lift_gripper_open_seen\n            & (final_distance <= TARGET_DISTANCE)\n        )
+        final_target_success = (
+            lift_success
+            & hold_success
+            & post_lift_gripper_open_seen
+            & (final_distance <= TARGET_DISTANCE)
+        )
         transient_near_target_open_success = max_near_target_open_run >= HOLD_STEPS
         return {
             "max_height_delta": max_height_delta,
@@ -208,7 +213,7 @@ def evaluate(
         "mean_max_hold_steps": sum(flat["max_hold_steps"]) / len(flat["max_hold_steps"]),
         "mean_final_target_distance_m": sum(flat["final_target_distance"]) / len(flat["final_target_distance"]),
         "target_region_seen_rate": sum(flat["target_region_seen"]) / len(flat["target_region_seen"]),
-        "post_lift_gripper_open_seen_rate": sum(flat["post_lift_gripper_open_seen"]) / len(flat["post_lift_gripper_open_seen"]),
+        "post_lift_gripper_open_rate": sum(flat["post_lift_gripper_open_seen"]) / len(flat["post_lift_gripper_open_seen"]),
         "transient_near_target_open_rate": sum(flat["transient_near_target_open_success"]) / len(flat["transient_near_target_open_success"]),
         "mean_max_near_target_open_steps": sum(flat["max_near_target_open_steps"]) / len(flat["max_near_target_open_steps"]),
         "mean_min_target_distance_m": sum(flat["min_target_distance"]) / len(flat["min_target_distance"]),
