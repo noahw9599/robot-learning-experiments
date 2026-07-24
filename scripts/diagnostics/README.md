@@ -15,6 +15,6 @@ It supports deterministic or stochastic actions, multiple seeds, configurable en
 
 ## Panda Transport Evaluator
 
-`evaluate_panda_transport_metrics.py` records behavior-level manipulation outcomes rather than relying on total reward alone. Metrics include lift, hold, target approach, release, stable placement, and closest target distance.
+`evaluate_panda_transport_metrics.py` records behavior-level manipulation outcomes rather than relying on total reward alone. Metrics include lift, hold, target approach, post-lift gripper opening, transient near-target open-gripper windows, final target distance, and final target success. The transient-window metric is intentionally not labeled stable placement because it does not prove that the object remained at the target.
 
 Large checkpoint and video artifacts are intentionally excluded from the public repository.
