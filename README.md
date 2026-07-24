@@ -5,7 +5,7 @@ Reinforcement-learning experiments for humanoid locomotion and robotic manipulat
 This repository presents two controlled studies built with MuJoCo/MJX, JAX, and Brax PPO:
 
 - Unitree G1 locomotion baseline reproduction and disturbance evaluation
-- Franka Panda pick-and-place reward curriculum and multi-seed evaluation
+- Franka Panda manipulation reward curriculum and multi-seed evaluation
 
 The emphasis is experimental discipline: reproduce a strong baseline, isolate one change at a time, measure behavior across seeds, document failure modes, and keep claims proportional to the evidence.
 
@@ -15,9 +15,9 @@ The emphasis is experimental discipline: reproduce a strong baseline, isolate on
 |---|---:|---|
 | Unitree G1 locomotion | 202,342,400 transitions | Reward improved from -5.801 to 15.578; peak 16.157 |
 | G1 disturbance robustness | Existing baseline checkpoint | 5/5 seeds completed the 250-step push horizon; 0 early terminations |
-| Panda release-and-settle curriculum | 1,638,400 final-stage transitions | 85.0% stable placement across 60 episodes and 3 seeds |
+| Panda staged manipulation curriculum | 1,638,400 final-stage transitions | 100% lift/hold; 96.7% target approach; 0% final target placement |
 
-The G1 result reproduces the official `G1JoystickFlatTerrain` task. The Panda result comes from a staged curriculum that progressed from lifting to holding, transport, release, and stable placement.
+The G1 result reproduces the official `G1JoystickFlatTerrain` task. The Panda curriculum progressed from lifting to holding and transport. A v4 release reward produced transient near-target releases, but an evaluator audit found 0% final target placement.
 
 ## Behavior Progression
 
@@ -26,7 +26,7 @@ The G1 result reproduces the official `G1JoystickFlatTerrain` task. The Panda re
 | Unitree G1 locomotion | [Official baseline walks beyond the camera frame](media/g1-official-baseline.mp4) | [Early policy falls forward immediately](media/g1-early-forward-fall.mp4) |
 | Franka Panda manipulation | [Transport v3 grasps, lifts, holds, and moves the cube](media/panda-transport-v3.mp4) | [Initial policy drags the cube without lifting](media/panda-baseline-dragging.mp4) |
 
-These videos illustrate behavioral progression; the quantified claims above come from instrumented evaluations, not selected rollouts. The Panda v3 video is the strongest saved precursor to the final release-and-settle policy. The v4 result is supported by a 60-episode, three-seed evaluation because routine v4 rendering was disabled to conserve cloud credits.
+These videos illustrate behavioral progression; the quantified claims above come from instrumented evaluations, not selected rollouts. The Panda v3 clip remains the strongest saved successful manipulation rollout. A later v4 render showed the cube released near the floating target and then falling away, which triggered the metric audit and corrected the final-placement claim.
 
 ## Learning System
 
@@ -52,7 +52,7 @@ The G1 policy uses an asymmetric actor-critic design: the actor receives a 103-e
 - Built deterministic, per-step diagnostics for support geometry, torso orientation, velocity, contacts, action authority, and actuator force.
 - Evaluated G1 robustness with randomized planar pushes across independent seeds.
 - Designed reversible reward patches for Panda lifting, transport, release, and settling.
-- Built an instrumented evaluator for lift, hold, target approach, release, final placement, and closest target distance.
+- Built and audited an instrumented evaluator for lift, hold, target approach, gripper opening, transient release windows, and final target distance.
 - Used TensorBoard, checkpoint manifests, headless EGL rendering, and bounded cloud runs with shutdown safeguards.
 
 ## What the Experiments Showed
@@ -60,7 +60,8 @@ The G1 policy uses an asymmetric actor-critic design: the actor receives a 103-e
 - PPO optimizes expected return; it does not preserve or revert to one previously successful action sequence.
 - Higher scalar reward did not consistently imply better balance or disturbance recovery.
 - Poorly specified rewards produced recognizable shortcuts, including dragging and scooting.
-- Behavior-level metrics and multi-seed evaluation were more informative than reward curves alone.
+- Behavior-level metrics, final-state checks, multi-seed evaluation, and rendered rollouts were more informative than reward curves alone.
+- Visual validation exposed a misleading metric: an 85% transient near-target release window corresponded to 0% final target placement.
 - Changing the actor observation size invalidated checkpoint normalization statistics and required training from scratch.
 - Compilation time and cloud cost are part of the practical experiment budget.
 
@@ -98,6 +99,8 @@ Large checkpoints, raw run directories, credentials, and cloud-specific identifi
 The G1 push result applies only to the stated five-seed, 250-step protocol. It is not a universal stability guarantee.
 
 The six-feature G1 observation experiment did not reach a valid training update before its compilation budget expired. It is documented as a bounded negative result, not as evidence that the proposed features help or hurt policy learning.
+
+The Panda v4 target was sampled in free space without a support surface. Its original "stable placement" metric measured a transient open-gripper window near that target, not where the cube finished. Audited final placement was 0/60 episodes, so the earlier 85% label was withdrawn.
 
 ## Author
 
