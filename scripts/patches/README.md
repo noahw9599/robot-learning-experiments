@@ -8,7 +8,7 @@ These scripts modify pinned MuJoCo Playground environment files while preserving
 2. `apply_panda_transport_reward_v3_patch.py`
 3. `apply_panda_transport_reward_v4_patch.py`
 
-The transport v4 patch requires v3 to be active because it extends the transport objective with release-and-settle behavior.
+The transport v4 patch requires v3 to be active because it extends the transport objective with near-target gripper-opening behavior. The final-state audit showed that this did not produce stable placement; see `docs/experiments/panda-manipulation-curriculum.md`.
 
 ## G1 Recovery Reference
 

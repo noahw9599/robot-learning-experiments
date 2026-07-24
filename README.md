@@ -1,6 +1,7 @@
 # Robot Learning Experiments
 
-Reinforcement-learning experiments for humanoid locomotion and robotic manipulation in MuJoCo Playground.
+An independent reinforcement-learning study of humanoid locomotion and robotic
+manipulation in MuJoCo Playground.
 
 This repository presents two controlled studies built with MuJoCo/MJX, JAX, and Brax PPO:
 
@@ -8,6 +9,17 @@ This repository presents two controlled studies built with MuJoCo/MJX, JAX, and 
 - Franka Panda manipulation reward curriculum and multi-seed evaluation
 
 The emphasis is experimental discipline: reproduce a strong baseline, isolate one change at a time, measure behavior across seeds, document failure modes, and keep claims proportional to the evidence.
+
+**Project status:** Complete. The repository preserves the verified results,
+evaluation tools, selected rollouts, and lessons from the study.
+
+## Start Here
+
+- [Verified quantitative results](results/summary.md)
+- [Project retrospective](docs/project-retrospective.md)
+- [Resume, interview, and LinkedIn materials](docs/career-materials.md)
+- [G1 baseline report](docs/experiments/g1-official-baseline.md)
+- [Panda curriculum and evaluation audit](docs/experiments/panda-manipulation-curriculum.md)
 
 ## Results at a Glance
 
@@ -51,7 +63,7 @@ The G1 policy uses an asymmetric actor-critic design: the actor receives a 103-e
 - Reproduced the official G1 baseline from pinned MuJoCo Playground source.
 - Built deterministic, per-step diagnostics for support geometry, torso orientation, velocity, contacts, action authority, and actuator force.
 - Evaluated G1 robustness with randomized planar pushes across independent seeds.
-- Designed reversible reward patches for Panda lifting, transport, release, and settling.
+- Designed reversible reward patches for Panda lifting, transport, and near-target release behavior.
 - Built and audited an instrumented evaluator for lift, hold, target approach, gripper opening, transient release windows, and final target distance.
 - Used TensorBoard, checkpoint manifests, headless EGL rendering, and bounded cloud runs with shutdown safeguards.
 
@@ -73,6 +85,7 @@ results/             Concise, resume-safe metrics
 scripts/diagnostics/ Per-step G1 and Panda evaluators
 scripts/patches/     Reversible reward and recovery modifications
 scripts/             Environment setup and smoke tests
+media/               Selected before-and-after policy rollouts
 ```
 
 ## Reproducing the Environment
@@ -93,6 +106,8 @@ Large checkpoints, raw run directories, credentials, and cloud-specific identifi
 - [Panda manipulation curriculum](docs/experiments/panda-manipulation-curriculum.md)
 - [G1 observation augmentation attempt](docs/experiments/g1-observation-augmentation.md)
 - [Verified results summary](results/summary.md)
+- [Project retrospective](docs/project-retrospective.md)
+- [Career materials](docs/career-materials.md)
 
 ## Limitations
 
@@ -101,6 +116,11 @@ The G1 push result applies only to the stated five-seed, 250-step protocol. It i
 The six-feature G1 observation experiment did not reach a valid training update before its compilation budget expired. It is documented as a bounded negative result, not as evidence that the proposed features help or hurt policy learning.
 
 The Panda v4 target was sampled in free space without a support surface. Its original "stable placement" metric measured a transient open-gripper window near that target, not where the cube finished. Audited final placement was 0/60 episodes, so the earlier 85% label was withdrawn.
+
+This project did not attempt sim-to-real transfer, hardware deployment, imitation
+learning, or a new reinforcement-learning algorithm. Its contribution is a
+carefully measured reproduction and reward-design study with documented positive
+and negative results.
 
 ## Author
 
